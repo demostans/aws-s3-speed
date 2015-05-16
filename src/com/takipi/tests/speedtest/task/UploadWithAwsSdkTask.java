@@ -25,7 +25,7 @@ public class UploadWithAwsSdkTask extends UploadTask
 		
 		long start = System.currentTimeMillis();
 		
-		boolean success = S3Manager.putBytes(region, bucket, key, data);
+		boolean success = S3Manager.putBytes(region, bucket, key, data, true);
 		
 		long finish = System.currentTimeMillis();
 		
