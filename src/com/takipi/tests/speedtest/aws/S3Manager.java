@@ -203,25 +203,27 @@ public class S3Manager {
 			try {
 				// Step 2: Upload parts.
 				int offset = 0;
-				byte[] buffer = new byte[partSize];
 
-				int bytesRead = 0;
+				int availableData = is.available();
 				int partId = 0;
-				while ((bytesRead = is.read(buffer, 0, partSize)) > 0) {
+				while (availableData > 0) {
 					partId++;
 					// Create request to upload a part.
+					
 					UploadPartRequest uploadRequest = new UploadPartRequest()
 							.withBucketName(bucket).withKey(key)
 							.withUploadId(initResponse.getUploadId())
 							.withPartNumber(partId).withFileOffset(offset)
-							.withInputStream(is).withPartSize(bytesRead);
-
-					// Upload part and add response to our list.
+							.withInputStream(is).withPartSize(Math.min(availableData, partSize))//Last part might be smaller than the other parts...
+							.withLastPart(availableData <= partSize);
 					
+					availableData -= partSize;
+					
+					// Upload part and add response to our list.
 					partETags.add(s3client.uploadPart(uploadRequest).getPartETag());
 
-					offset += bytesRead;
-				}
+					offset += partSize;
+				} 
 
 				// Step 3: Complete.
 				CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(bucket, key, initResponse.getUploadId(), partETags);
